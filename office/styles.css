@@ -188,9 +188,9 @@ ul, ol { list-style: none; }
   box-shadow: 0 8px 22px rgba(0,0,0,.35); white-space: nowrap; cursor: pointer; }
 .meeting-hotspot:hover { background: rgba(15,35,46,.95); border-color: rgba(127,231,255,.75); }
 .meeting-entry { position: absolute; right: 16px; bottom: 58px; z-index: 6;
-  pointer-events: auto; border: 1px solid rgba(127,231,255,.35); border-radius: 999px; padding: 7px 12px;
-  background: rgba(8,14,22,.86); color: #c9f4ff; font: 700 10px/1.2 "Plus Jakarta Sans", system-ui, sans-serif;
-  white-space: nowrap; cursor: pointer; }
+  pointer-events: auto; border: 1px solid rgba(127,231,255,.5); border-radius: 999px; padding: 11px 16px;
+  background: rgba(8,14,22,.92); color: #e7fbff; font: 800 13px/1.2 "Plus Jakarta Sans", system-ui, sans-serif;
+  white-space: nowrap; cursor: pointer; box-shadow: 0 8px 26px rgba(0,0,0,.36); }
 .meeting-entry:hover { background: rgba(15,35,46,.95); border-color: rgba(127,231,255,.75); }
 .btn:disabled { background: var(--row); color: var(--dim); cursor: default; }
 

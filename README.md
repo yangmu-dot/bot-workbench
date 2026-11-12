@@ -29,10 +29,10 @@
 
 ### 鏂瑰紡涓€锛欸itHub Releases锛堟帹鑽愶級
 
-1. 浠?Releases 涓嬭浇 `bot-workbench-0.1.1.tgz`
+1. 浠?Releases 涓嬭浇 `bot-workbench-0.1.2.tgz`
 2. 鍦?DSH profile 鐩綍瀹夎锛?
 ```bash
-pnpm add file:/absolute/path/to/bot-workbench-0.1.1.tgz
+pnpm add file:/absolute/path/to/bot-workbench-0.1.2.tgz
 ```
 
 3. 鎶?`bot-workbench` 鍔犲叆 profile 鐨?bundles锛?
@@ -51,7 +51,7 @@ pnpm add file:/absolute/path/to/bot-workbench-0.1.1.tgz
 
 ```text
 plugin_manager install_bundle
-target: file:/absolute/path/to/bot-workbench-0.1.1.tgz
+target: file:/absolute/path/to/bot-workbench-0.1.2.tgz
 ```
 
 ### 鏂瑰紡浜岋細浠庝粨搴撳畨瑁?

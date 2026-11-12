@@ -92,7 +92,7 @@ export function createUI(root, { state, onFloor, onSelect, onZoom, onChat, onInv
     <nav id="lift" class="panel" aria-label="Floors"></nav>
     <section id="card" class="panel"></section>
     <section id="inbox"></section>
-    <button id="meeting-entry" class="meeting-entry" type="button">会议室 · 添加会议</button>
+    <button id="meeting-entry" class="meeting-entry" type="button">＋ 会议室</button>
     <div id="theme" class="panel pill">
       <select id="theme-select" aria-label="视觉风格">
         <option value="auto">自动风格</option>

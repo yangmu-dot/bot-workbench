@@ -395,6 +395,11 @@ window.__ModuleLoader__.load({
 .bw-meeting-message b { font-size: 9.5px; color: #8fe7d0; }
 .bw-meeting-message p { margin: 3px 0 0; font-size: 11px; line-height: 1.55; color: #dbe6f2; white-space: pre-wrap; }
 .bw-meeting-pick { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.bw-meeting-option { display: inline-flex; align-items: center; gap: 5px; padding: 6px 9px; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.035); color: #c8d4e2; font-size: 10.5px; cursor: pointer; }
+.bw-meeting-option.on { border-color: rgba(94,231,196,.55); background: rgba(94,231,196,.12); color: #eafff9; }
+.bw-meeting-option input { accent-color: #5ee7c4; }
+.bw-meeting-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 12px; }
 .bw-meeting-input { flex: 1; min-width: 0; font: inherit; font-size: 11px; color: #eaf2fb; padding: 7px 9px;
   border-radius: 9px; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04); outline: none; }
 .bw-meeting-input:focus { border-color: rgba(94,231,196,.55); }
@@ -1958,6 +1963,7 @@ window.__ModuleLoader__.load({
       const [deletingId, setDeletingId] = React.useState('');
       const [notice, setNotice] = React.useState('');
       const [meeting, setMeeting] = React.useState(null);
+      const [meetingDraft, setMeetingDraft] = React.useState([]);
       const [meetingPanelOpen, setMeetingPanelOpen] = React.useState(false);
       const [meetingInput, setMeetingInput] = React.useState('');
       const [meetingMessages, setMeetingMessages] = React.useState([]);
@@ -2765,8 +2771,23 @@ window.__ModuleLoader__.load({
           setMeetingBusy(false);
         }
       };
-      const removeFromMeeting = async (slug) => {
-        const current = meeting;
+      const toggleMeetingDraft = (slug) => {
+        if (!slug) return;
+        setMeetingDraft((current) => current.includes(slug) ? current.filter((item) => item !== slug) : [...current, slug].slice(0, 8));
+        setMeetingError('');
+      };
+      const createMeetingFromDraft = () => {
+        if (meetingDraft.length < 2) {
+          setMeetingError('至少选择 2 位 Bot 才能开会');
+          return;
+        }
+        const next = makeMeeting(meetingDraft.slice());
+        setMeeting(next);
+        setMeetingDraft([]);
+        setMeetingError('');
+        void persistMeeting(next, []);
+      };
+      const removeFromMeeting = async (slug) => {        const current = meeting;
         if (!current) return;
         const participants = current.participants.filter((item) => item !== slug);
         setMeetingBusy(true);
@@ -2823,6 +2844,7 @@ window.__ModuleLoader__.load({
           setMeeting(null);
           setMeetingMessages([]);
           setMeetingInput('');
+          setMeetingDraft([]);
           setMeetingPanelOpen(false);
         } catch (error) {
           setMeetingError(String(error && error.message ? error.message : error));
@@ -2882,7 +2904,8 @@ window.__ModuleLoader__.load({
             setMeetingPanelOpen(true);
           } else if (data.type === 'bot-workbench-invite-meeting' && typeof data.slug === 'string' && data.slug) {
             setMeetingPanelOpen(true);
-            void addToMeeting(data.slug);
+            if (meeting) void addToMeeting(data.slug);
+            else toggleMeetingDraft(data.slug);
           }
         };
         window.addEventListener('message', onMessage);
@@ -2936,7 +2959,7 @@ window.__ModuleLoader__.load({
                   h('div', { className: 'bw-minutes-modal-title' }, '会议室'),
                   h('div', { className: 'bw-minutes-modal-sub' }, meeting
                     ? (meeting.channelId ? '临时会议群已建立 · ' + meeting.participants.length + ' 位 Bot' : '还没有开会，发送第一条议题时建临时群')
-                    : '选择 Bot 后发送议题，自动创建临时会议群')
+                    : '勾选至少 2 位 Bot，再创建会议')
                 ),
                 h('button', { className: 'bw-close', type: 'button', onClick: () => setMeetingPanelOpen(false), 'aria-label': '关闭' }, '×')
               ),
@@ -2974,14 +2997,29 @@ window.__ModuleLoader__.load({
                     )
                   )
                 : h('div', null,
-                    h('div', { className: 'bw-empty-small' }, '把 Bot 加进会议室：'),
+                    h('div', { className: 'bw-empty-small' }, '勾选至少 2 位 Bot，再创建会议：'),
                     h('div', { className: 'bw-meeting-pick' },
-                      (bots || []).map((bot) => h('button', {
-                        className: 'bw-office-tool',
-                        type: 'button',
+                      (bots || []).map((bot) => h('label', {
+                        className: 'bw-meeting-option' + (meetingDraft.includes(bot.slug) ? ' on' : ''),
                         key: bot.slug,
-                        onClick: () => void addToMeeting(bot.slug),
-                      }, bot.name))
+                      },
+                        h('input', {
+                          type: 'checkbox',
+                          checked: meetingDraft.includes(bot.slug),
+                          onChange: () => toggleMeetingDraft(bot.slug),
+                        }),
+                        bot.name
+                      ))
+                    ),
+                    meetingError ? h('div', { className: 'bw-error' }, meetingError) : null,
+                    h('div', { className: 'bw-meeting-actions' },
+                      h('span', { className: 'bw-tag' }, '已选 ' + meetingDraft.length + ' / 8'),
+                      h('button', {
+                        className: 'bw-meeting-send',
+                        type: 'button',
+                        disabled: meetingDraft.length < 2,
+                        onClick: createMeetingFromDraft,
+                      }, '创建会议')
                     )
                   )
             )
