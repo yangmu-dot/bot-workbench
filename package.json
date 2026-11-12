@@ -1,0 +1,45 @@
+{
+  "name": "bot-workbench",
+  "version": "0.1.0",
+  "private": false,
+  "license": "MIT",
+  "author": "Bot Workbench contributors",
+  "type": "module",
+  "description": "Open-source Tobs Bot mode workbench with a live 3D office, projects, meetings, minutes and schedules.",
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "tobs",
+    "bot",
+    "3d",
+    "threejs",
+    "workbench",
+    "office"
+  ],
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "portraits/*",
+    "office/**",
+    "README.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true
+    }
+  }
+}

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Bot Workbench · Office</title>
+<link rel="stylesheet" href="styles.css">
+<script type="importmap">
+{ "imports": {
+  "three": "./vendor/three.module.js",
+  "three/addons/": "./vendor/addons/"
+} }
+</script>
+</head>
+<body>
+<div id="stage"></div>
+<div id="ui"></div>
+<div id="err" style="display:none;position:fixed;left:16px;right:16px;bottom:16px;z-index:99;background:#2a0f12;color:#ffd7d7;border:1px solid #ff5d5d;border-radius:12px;padding:10px 14px;font:12px/1.5 monospace;white-space:pre-wrap;max-height:38vh;overflow:auto"></div>
+<script>
+  const showError = (text) => {
+    const box = document.getElementById('err');
+    if (!box) return;
+    box.style.display = 'block';
+    box.textContent = String(text || 'Unknown error');
+  };
+  window.addEventListener('error', (e) => showError((e.error && e.error.stack) || e.message));
+  window.addEventListener('unhandledrejection', (e) => showError((e.reason && e.reason.stack) || e.reason));
+</script>
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
