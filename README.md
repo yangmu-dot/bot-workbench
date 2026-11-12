@@ -67,7 +67,7 @@ target: file:/absolute/path/to/bot-workbench-0.1.0.tgz
 ### 方式二：从仓库安装
 
 ```bash
-git clone https://github.com/<owner>/bot-workbench.git
+git clone https://github.com/yangmu-dot/bot-workbench.git
 cd <DSH profile directory>
 pnpm add file:/absolute/path/to/bot-workbench
 ```
@@ -114,6 +114,10 @@ docs/screenshots/        README 截图
 - 改 `client.js` 后刷新页面；客户端插件可能需要重启 DSH
 - 改 `office/` 是纯静态资源，关掉办公室重开即可
 - 3D 使用 Three.js 0.170，已内置在 `office/vendor/`
+
+## DSH 插件市场
+
+市场条目在 [`market/bot-workbench.yml`](market/bot-workbench.yml)。DSH 社区市场需要公开仓库满 1 天后，向 `awesome-dsh-plugin` 提交收录 PR；审核通过后再由市场索引收录。
 
 ## License
 
