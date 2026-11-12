@@ -83,7 +83,7 @@ function ring(list) {
   return `conic-gradient(${stops.join(',')})`;
 }
 
-export function createUI(root, { state, onFloor, onSelect, onZoom, onChat, onTheme, onDayMode, onPhoto, onPhotoClear }) {
+export function createUI(root, { state, onFloor, onSelect, onZoom, onChat, onInvite, onMeeting, onTheme, onDayMode, onPhoto, onPhotoClear }) {
   let focus = null, selected = null, queued = false, cardKey = '', swapTimer = 0, lastInbox = null;
 
   root.innerHTML = `
@@ -92,6 +92,7 @@ export function createUI(root, { state, onFloor, onSelect, onZoom, onChat, onThe
     <nav id="lift" class="panel" aria-label="Floors"></nav>
     <section id="card" class="panel"></section>
     <section id="inbox"></section>
+    <button id="meeting-entry" class="meeting-entry" type="button">会议室 · 添加会议</button>
     <div id="theme" class="panel pill">
       <select id="theme-select" aria-label="视觉风格">
         <option value="auto">自动风格</option>
@@ -113,11 +114,12 @@ export function createUI(root, { state, onFloor, onSelect, onZoom, onChat, onThe
   const $ = (id) => root.querySelector(id);
 
   root.addEventListener('click', (e) => {
-    const t = e.target.closest('[data-floor],[data-bot],[data-chat],[data-zoom],[data-close]');
+    const t = e.target.closest('[data-floor],[data-bot],[data-chat],[data-invite],[data-zoom],[data-close]');
     if (!t) return;
     if (t.dataset.floor != null) onFloor(t.dataset.floor);
     else if (t.dataset.bot) onSelect(t.dataset.bot);
     else if (t.dataset.chat) onChat(t.dataset.chat);
+    else if (t.dataset.invite) onInvite(t.dataset.invite);
     else if (t.dataset.zoom) onZoom(+t.dataset.zoom);
     else if (t.hasAttribute('data-close')) onSelect(null);
   });
@@ -153,6 +155,8 @@ export function createUI(root, { state, onFloor, onSelect, onZoom, onChat, onThe
   for (const button of root.querySelectorAll('[data-photo-clear]')) {
     button.addEventListener('click', (event) => { event.stopPropagation(); onPhotoClear(); });
   }
+  const meetingEntry = root.querySelector('#meeting-entry');
+  if (meetingEntry) meetingEntry.addEventListener('click', (event) => { event.stopPropagation(); onMeeting(); });
 
   const bots = () => [...state.bots.values()];
   const floorNo = (team) => state.teams.length - state.teams.indexOf(team);
@@ -177,7 +181,10 @@ export function createUI(root, { state, onFloor, onSelect, onZoom, onChat, onThe
       <div class="nums"><div><b>${b.steps}</b>updates</div><div><b>${b.tasks}</b>done</div><div><b>${hours}h</b>busy</div><div><b>${kfmt(b.usage)}</b>${esc(state.usageUnit)}</div></div>
       <div class="sub-h">Timeline</div>
       ${feed(b.recent.map((r) => ({ ...r, id: b.id })))}
-      <button class="btn" data-chat="${esc(b.id)}">${ICON.chat}${b.state === 'waiting' ? '处理 / 打开私聊' : '打开私聊'}</button>`;
+      <div class="card-actions">
+        <button class="btn" data-chat="${esc(b.id)}">${ICON.chat}${b.state === 'waiting' ? '处理 / 私聊' : '打开私聊'}</button>
+        <button class="btn" data-invite="${esc(b.id)}">邀请到会议室</button>
+      </div>`;
   }
 
   function floorCard(team) {

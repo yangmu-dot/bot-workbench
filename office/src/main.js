@@ -254,6 +254,24 @@ controls.minPolarAngle = 0.5;
 controls.maxPolarAngle = 1.25;
 
 const building = new Building(scene);
+const commonFloor = building.floor('公共层');
+if (commonFloor && commonFloor.meetingSeats.length) {
+  const seats = commonFloor.meetingSeats;
+  const cx = seats.reduce((n, seat) => n + seat.pos.x, 0) / seats.length;
+  const cz = seats.reduce((n, seat) => n + seat.pos.z, 0) / seats.length;
+  const meetingButton = document.createElement('button');
+  meetingButton.type = 'button';
+  meetingButton.className = 'meeting-hotspot';
+  meetingButton.textContent = '会议室 · 添加会议';
+  meetingButton.style.pointerEvents = 'auto';
+  meetingButton.addEventListener('click', (event) => {
+    event.stopPropagation();
+    window.parent.postMessage({ type: 'bot-workbench-open-meeting' }, window.location.origin);
+  });
+  const meetingLabel = new CSS2DObject(meetingButton);
+  meetingLabel.position.set(cx, 3.2, cz);
+  commonFloor.inner.add(meetingLabel);
+}
 const topY = Math.max(0, ...[...building.floors.values()].map((floor) => floor.group.position.y));
 atmosphere = createAtmosphere(scene, { topY: topY + 2 });
 atmosphere.set(currentTheme);
@@ -359,6 +377,12 @@ ui = createUI(document.getElementById('ui'), {
       window.location.hash = '#botharness-open=dm:' + encodeURIComponent(slug);
       window.setTimeout(() => window.location.reload(), 30);
     }
+  },
+  onInvite: (slug) => {
+    window.parent.postMessage({ type: 'bot-workbench-invite-meeting', slug }, window.location.origin);
+  },
+  onMeeting: () => {
+    window.parent.postMessage({ type: 'bot-workbench-open-meeting' }, window.location.origin);
   },
   onTheme: (name, auto) => {
     if (name === 'auto') setTheme(themeForHour(new Date().getHours() + new Date().getMinutes() / 60), true);

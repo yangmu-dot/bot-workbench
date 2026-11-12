@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   --bg: #04070d;
   --panel: rgba(22, 22, 24, 0.95);
   --line: rgba(255, 255, 255, 0.08);
@@ -180,6 +180,18 @@ ul, ol { list-style: none; }
 .feed .empty span { color: var(--dim); }
 
 .btn { margin-top: 14px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 10px; border-radius: 999px; background: #fff; color: #141416; font-weight: 800; text-decoration: none; }
+.card-actions { display: flex; gap: 6px; margin-top: 14px; }
+.card-actions .btn { margin-top: 0; flex: 1; padding: 8px 6px; font-size: 10.5px; }
+.card-actions .btn[data-invite] { background: var(--row); color: var(--text); border: 1px solid var(--line); }
+.meeting-hotspot { pointer-events: auto; border: 1px solid rgba(127,231,255,.4); border-radius: 999px;
+  padding: 5px 10px; background: rgba(8,14,22,.88); color: #c9f4ff; font: 700 10px/1.2 "Plus Jakarta Sans", system-ui, sans-serif;
+  box-shadow: 0 8px 22px rgba(0,0,0,.35); white-space: nowrap; cursor: pointer; }
+.meeting-hotspot:hover { background: rgba(15,35,46,.95); border-color: rgba(127,231,255,.75); }
+.meeting-entry { position: absolute; right: 16px; bottom: 58px; z-index: 6;
+  pointer-events: auto; border: 1px solid rgba(127,231,255,.35); border-radius: 999px; padding: 7px 12px;
+  background: rgba(8,14,22,.86); color: #c9f4ff; font: 700 10px/1.2 "Plus Jakarta Sans", system-ui, sans-serif;
+  white-space: nowrap; cursor: pointer; }
+.meeting-entry:hover { background: rgba(15,35,46,.95); border-color: rgba(127,231,255,.75); }
 .btn:disabled { background: var(--row); color: var(--dim); cursor: default; }
 
 .fl-top { display: flex; align-items: center; gap: 12px; }

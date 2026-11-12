@@ -389,6 +389,12 @@ window.__ModuleLoader__.load({
 .bw-meeting-text { color: #dbe6f2; white-space: pre-wrap; overflow-wrap: anywhere; }
 .bw-meeting-error { font-size: 9.5px; color: #fca5a5; }
 .bw-meeting-compose { display: flex; gap: 6px; }
+.bw-meeting-panel { width: min(640px, 100%); }
+.bw-meeting-thread { display: flex; flex-direction: column; gap: 6px; max-height: 280px; overflow: auto; margin: 10px 0; }
+.bw-meeting-message { padding: 7px 9px; border-radius: 9px; background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.06); }
+.bw-meeting-message b { font-size: 9.5px; color: #8fe7d0; }
+.bw-meeting-message p { margin: 3px 0 0; font-size: 11px; line-height: 1.55; color: #dbe6f2; white-space: pre-wrap; }
+.bw-meeting-pick { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
 .bw-meeting-input { flex: 1; min-width: 0; font: inherit; font-size: 11px; color: #eaf2fb; padding: 7px 9px;
   border-radius: 9px; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04); outline: none; }
 .bw-meeting-input:focus { border-color: rgba(94,231,196,.55); }
@@ -1952,6 +1958,7 @@ window.__ModuleLoader__.load({
       const [deletingId, setDeletingId] = React.useState('');
       const [notice, setNotice] = React.useState('');
       const [meeting, setMeeting] = React.useState(null);
+      const [meetingPanelOpen, setMeetingPanelOpen] = React.useState(false);
       const [meetingInput, setMeetingInput] = React.useState('');
       const [meetingMessages, setMeetingMessages] = React.useState([]);
       const [meetingBusy, setMeetingBusy] = React.useState(false);
@@ -2816,6 +2823,7 @@ window.__ModuleLoader__.load({
           setMeeting(null);
           setMeetingMessages([]);
           setMeetingInput('');
+          setMeetingPanelOpen(false);
         } catch (error) {
           setMeetingError(String(error && error.message ? error.message : error));
         } finally {
@@ -2867,6 +2875,20 @@ window.__ModuleLoader__.load({
         }
       };
       React.useEffect(() => {
+        const onMessage = (event) => {
+          if (event.origin !== window.location.origin) return;
+          const data = event.data || {};
+          if (data.type === 'bot-workbench-open-meeting') {
+            setMeetingPanelOpen(true);
+          } else if (data.type === 'bot-workbench-invite-meeting' && typeof data.slug === 'string' && data.slug) {
+            setMeetingPanelOpen(true);
+            void addToMeeting(data.slug);
+          }
+        };
+        window.addEventListener('message', onMessage);
+        return () => window.removeEventListener('message', onMessage);
+      }, [meeting]);
+      React.useEffect(() => {
         if (!meeting || !meeting.channelId) return undefined;
         void loadMeetingMessages(meeting.channelId);
         const timer = setInterval(() => void loadMeetingMessages(meeting.channelId), 3000);
@@ -2906,6 +2928,65 @@ window.__ModuleLoader__.load({
 
 
       const portal = (node) => (ReactDOM && typeof ReactDOM.createPortal === 'function' ? ReactDOM.createPortal(node, document.body) : node);
+      const meetingPanel = meetingPanelOpen
+        ? portal(h('div', { className: 'bw-minutes-backdrop', onClick: () => setMeetingPanelOpen(false) },
+            h('div', { className: 'bw-minutes-modal bw-meeting-panel', onClick: (event) => event.stopPropagation() },
+              h('div', { className: 'bw-minutes-head' },
+                h('div', null,
+                  h('div', { className: 'bw-minutes-modal-title' }, '会议室'),
+                  h('div', { className: 'bw-minutes-modal-sub' }, meeting
+                    ? (meeting.channelId ? '临时会议群已建立 · ' + meeting.participants.length + ' 位 Bot' : '还没有开会，发送第一条议题时建临时群')
+                    : '选择 Bot 后发送议题，自动创建临时会议群')
+                ),
+                h('button', { className: 'bw-close', type: 'button', onClick: () => setMeetingPanelOpen(false), 'aria-label': '关闭' }, '×')
+              ),
+              meeting && meeting.participants && meeting.participants.length
+                ? h('div', null,
+                    h('div', { className: 'bw-meeting-people' },
+                      meeting.participants.map((slug) => h('span', { className: 'bw-meeting-person', key: slug },
+                        botNameOf(slug),
+                        h('button', {
+                          className: 'bw-meeting-remove',
+                          type: 'button',
+                          onClick: () => removeFromMeeting(slug),
+                          'aria-label': '移出会议室',
+                        }, '×')
+                      ))
+                    ),
+                    h('div', { className: 'bw-meeting-thread' },
+                      (meetingMessages || []).map((message, index) => h('div', { className: 'bw-meeting-message', key: message.id || index },
+                        h('b', null, message.author || 'Bot'),
+                        h('p', null, message.text || '')
+                      )),
+                      !meetingMessages.length ? h('div', { className: 'bw-empty-small' }, '还没有发言。发送第一条议题后自动建临时群。') : null
+                    ),
+                    meetingError ? h('div', { className: 'bw-error' }, meetingError) : null,
+                    h('div', { className: 'bw-meeting-compose' },
+                      h('input', {
+                        className: 'bw-model-input',
+                        placeholder: meeting.channelId ? '说点什么…' : '输入第一条议题…',
+                        value: meetingInput,
+                        onChange: (event) => setMeetingInput(event.target.value),
+                        onKeyDown: (event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void sendMeeting(); } },
+                      }),
+                      h('button', { className: 'bw-meeting-send', type: 'button', disabled: meetingBusy || !meetingInput.trim(), onClick: () => void sendMeeting() }, meetingBusy ? '发送中…' : '发送'),
+                      h('button', { className: 'bw-office-tool', type: 'button', disabled: meetingBusy, onClick: () => void endMeeting() }, '结束会议')
+                    )
+                  )
+                : h('div', null,
+                    h('div', { className: 'bw-empty-small' }, '把 Bot 加进会议室：'),
+                    h('div', { className: 'bw-meeting-pick' },
+                      (bots || []).map((bot) => h('button', {
+                        className: 'bw-office-tool',
+                        type: 'button',
+                        key: bot.slug,
+                        onClick: () => void addToMeeting(bot.slug),
+                      }, bot.name))
+                    )
+                  )
+            )
+          ))
+        : null;
       const minutesModal = minutesOpen
         ? portal(h('div', { className: 'bw-minutes-backdrop', onClick: () => setMinutesOpen(null) },
             h('div', { className: 'bw-minutes-modal', onClick: (event) => event.stopPropagation() },
@@ -3466,7 +3547,8 @@ window.__ModuleLoader__.load({
         quotaModal,
         modelSettingsModal,
         recoveryModal,
-        projectModal
+        projectModal,
+        meetingPanel
       );
     }
 
