@@ -2776,18 +2776,31 @@ window.__ModuleLoader__.load({
         setMeetingDraft((current) => current.includes(slug) ? current.filter((item) => item !== slug) : [...current, slug].slice(0, 8));
         setMeetingError('');
       };
-      const createMeetingFromDraft = () => {
+      const createMeetingFromDraft = async () => {
         if (meetingDraft.length < 2) {
           setMeetingError('至少选择 2 位 Bot 才能开会');
           return;
         }
-        const next = makeMeeting(meetingDraft.slice());
+        const draft = meetingDraft.slice();
+        const next = makeMeeting(draft);
         setMeeting(next);
         setMeetingDraft([]);
+        setMeetingBusy(true);
         setMeetingError('');
-        void persistMeeting(next, []);
+        try {
+          const withChannel = await ensureMeetingChannel(draft);
+          setMeeting(withChannel);
+          void persistMeeting(withChannel, []);
+        } catch (error) {
+          setMeeting(next);
+          setMeetingError('会议已创建，但临时群创建失败：' + String(error && error.message ? error.message : error));
+          void persistMeeting(next, []);
+        } finally {
+          setMeetingBusy(false);
+        }
       };
-      const removeFromMeeting = async (slug) => {        const current = meeting;
+      const removeFromMeeting = async (slug) => {
+        const current = meeting;
         if (!current) return;
         const participants = current.participants.filter((item) => item !== slug);
         setMeetingBusy(true);
@@ -2958,8 +2971,8 @@ window.__ModuleLoader__.load({
                 h('div', null,
                   h('div', { className: 'bw-minutes-modal-title' }, '会议室'),
                   h('div', { className: 'bw-minutes-modal-sub' }, meeting
-                    ? (meeting.channelId ? '临时会议群已建立 · ' + meeting.participants.length + ' 位 Bot' : '还没有开会，发送第一条议题时建临时群')
-                    : '勾选至少 2 位 Bot，再创建会议')
+                    ? (meetingBusy ? '正在创建临时会议群…' : meeting.channelId ? '临时会议群已建立 · ' + meeting.participants.length + ' 位 Bot · 可以先不说话' : '会议已创建，临时群未建立')
+                    : '勾选至少 2 位 Bot 后创建会议，不强制发言')
                 ),
                 h('button', { className: 'bw-close', type: 'button', onClick: () => setMeetingPanelOpen(false), 'aria-label': '关闭' }, '×')
               ),
@@ -2981,13 +2994,13 @@ window.__ModuleLoader__.load({
                         h('b', null, message.author || 'Bot'),
                         h('p', null, message.text || '')
                       )),
-                      !meetingMessages.length ? h('div', { className: 'bw-empty-small' }, '还没有发言。发送第一条议题后自动建临时群。') : null
+                      !meetingMessages.length ? h('div', { className: 'bw-empty-small' }, '暂无发言。会议已经建好，先听、先看，或者直接结束都可以。') : null
                     ),
                     meetingError ? h('div', { className: 'bw-error' }, meetingError) : null,
                     h('div', { className: 'bw-meeting-compose' },
                       h('input', {
                         className: 'bw-model-input',
-                        placeholder: meeting.channelId ? '说点什么…' : '输入第一条议题…',
+                        placeholder: '想发言时再输入（可选）…',
                         value: meetingInput,
                         onChange: (event) => setMeetingInput(event.target.value),
                         onKeyDown: (event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void sendMeeting(); } },
@@ -3017,9 +3030,9 @@ window.__ModuleLoader__.load({
                       h('button', {
                         className: 'bw-meeting-send',
                         type: 'button',
-                        disabled: meetingDraft.length < 2,
+                        disabled: meetingDraft.length < 2 || meetingBusy,
                         onClick: createMeetingFromDraft,
-                      }, '创建会议')
+                      }, meetingBusy ? '创建中…' : '创建会议并建群')
                     )
                   )
             )
